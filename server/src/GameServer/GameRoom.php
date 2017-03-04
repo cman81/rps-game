@@ -27,19 +27,27 @@ class GameRoom implements MessageComponentInterface {
     $this->clients->attach($conn);
 
     echo "New connection! ({$conn->resourceId})\n";
+
+    $conn->send(json_encode(array(
+      'from' => 'GameRoom',
+      'operation' => 'setTitle',
+      'content' => $conn->resourceId,
+    )));
   }
 
   public function onMessage(ConnectionInterface $from, $msg) {
-    $numRecv = count($this->clients) - 1;
-    echo sprintf('Connection %d sending message "%s" to %d other connection%s' . "\n"
-      , $from->resourceId, $msg, $numRecv, $numRecv == 1 ? '' : 's');
-
-    foreach ($this->clients as $client) {
-      if ($from !== $client) {
-        // The sender is not the receiver, send to each client connected
-        $client->send($msg);
-      }
+    if ($message = $this->validateMessage($msg)) {
+      $handler = new ChatBot($from, $this->clients);
+//      $handler = new $message['handler']($from, $this->clients);
+      $handler->handle($message->messageDetails);
+    } else {
+      // Send this back to the originator
+      $from->send(json_encode(array(
+        'status' => 'error',
+        'message' => sprintf('Undeliverable message: "%s"', $msg)
+      )));
     }
+
   }
 
   public function onClose(ConnectionInterface $conn) {
@@ -53,5 +61,27 @@ class GameRoom implements MessageComponentInterface {
     echo "An error has occurred: {$e->getMessage()}\n";
 
     $conn->close();
+  }
+
+  /**
+   * Check to see if a message has a valid handler, for example:
+   * - a chat bot (private, public messages)
+   * - the game hostess (starting new games, loading games in progress)
+   * - a game's referee (making moves, updating the gamestate)
+   *
+   * @param $msg
+   * @return boolean
+   */
+  public function validateMessage($msg) {
+    $msg = \GuzzleHttp\json_decode($msg);
+    if (in_array($msg->handler, array(
+      'ChatBot',
+      'GameHostess',
+      'RPSReferee',
+    ))) {
+      return $msg;
+    }
+
+    return FALSE;
   }
 }

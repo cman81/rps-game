@@ -2,19 +2,69 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title></title>
+    <title>Test</title>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="GameObjects/ChatBotReceiver.js"></script>
+    <script src="GameObjects/GameRoomReceiver.js"></script>
+    <script>
+        (function ($) {
+            $(document).ready(function() {
+                var conn = new WebSocket('ws://localhost:8181');
+                conn.onopen = function(e) {
+                    console.log("Connection established!");
+                };
+
+                /**
+                 * When a message is received, hand it off to its appropriate object for further handling.
+                 * For example: messages that come from 'GameRoom' with an operation 'setTitle' should run 'GameRoomReceiver.setTitle()'
+                 *
+                 * @see http://stackoverflow.com/questions/969743/how-do-i-call-a-dynamically-named-method-in-javascript
+                 *
+                 * @param e
+                 */
+                conn.onmessage = function(e) {
+                    try {
+                        var msg = JSON.parse(e.data);
+                        window[msg.from + 'Receiver'][msg.operation](msg.content);
+                    } catch(err) {
+                        console.log(e.data);
+                        console.log(err.message);
+                    }
+                };
+
+                $('.sendToAll').click(function() {
+                    var $messages = $('.messages');
+                    var $textarea = $('textarea');
+                    $messages.html($messages.html() + $textarea.val() + "<br />");
+                    conn.send(JSON.stringify({
+                        "handler": "ChatBot",
+                        "messageDetails": {
+                            "to": "all",
+                            "message": $textarea.val()
+                        }
+                    }));
+                });
+
+            });
+        })(jQuery);
+    </script>
 </head>
 <body>
-    <script>
-        var conn = new WebSocket('ws://localhost:8181');
-        conn.onopen = function(e) {
-            console.log("Connection established!");
-        };
-
-        conn.onmessage = function(e) {
-            console.log(e.data);
-        };
-    </script>
+    <style>
+        .messages {
+            height: 80vh;
+            border: 1px black solid;
+        }
+        textarea {
+            width: 75%;
+            height: 15vh;
+        }
+    </style>
+    <div class="messages">&nbsp;<br /></div>
+    <div class="input">
+        <textarea></textarea>
+        <input type="button" class="sendToAll" value="Send To All" />
+    </div>
 
 </body>
 </html>
