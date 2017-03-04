@@ -12,7 +12,6 @@ namespace GameServer;
 class ChatBot implements GameServerHandler {
   private $sender;
   private $clients;
-  private $receiver;
 
   /**
    * ChatBot constructor.
@@ -23,8 +22,9 @@ class ChatBot implements GameServerHandler {
     $this->clients = $clients;
   }
 
-
   public function handle($msgDetails) {
+    $is_sent = FALSE;
+
     foreach ($this->clients as $client) {
       // handle public message
       if ($msgDetails->to == 'all' && $client !== $this->sender) {
@@ -37,6 +37,7 @@ class ChatBot implements GameServerHandler {
             'message' => $msgDetails->message,
           ),
         )));
+        $is_sent = TRUE;
         continue;
       }
 
@@ -51,8 +52,22 @@ class ChatBot implements GameServerHandler {
             'message' => $msgDetails->message,
           ),
         )));
+        $is_sent = TRUE;
         break;
       }
+    }
+
+    // handle unknown recipient
+    if (!$is_sent) {
+      $this->sender->send(json_encode(array(
+        'from' => 'ChatBot',
+        'operation' => 'say',
+        'content' => array(
+          'sender' => 'ChatBot',
+          'mode' => 'private',
+          'message' => 'Your message was not sent because there is no user ' . $msgDetails->to,
+        ),
+      )));
     }
   }
 }

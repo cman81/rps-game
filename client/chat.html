@@ -32,17 +32,28 @@
                     }
                 };
 
-                $('.sendToAll').click(function() {
+                $('.send').click(function() {
                     var $messages = $('.messages');
                     var $textarea = $('textarea');
-                    $messages.html($messages.html() + $textarea.val() + "<br />");
+
+                    if ($.trim($textarea.val()) == '') {
+                        return;
+                    }
+
+                    if ($('.receiver').val() == 'all') {
+                        $messages.html($messages.html() + 'You say: ' + $textarea.val() + "<br />");
+                    } else {
+                        $messages.html($messages.html() + 'You whisper to ' + $('.receiver').val() + ': ' + $textarea.val() + "<br />");
+                    }
                     conn.send(JSON.stringify({
                         "handler": "ChatBot",
                         "messageDetails": {
-                            "to": "all",
+                            "to": $('.receiver').val(),
                             "message": $textarea.val()
                         }
                     }));
+
+                    $textarea.val('');
                 });
 
             });
@@ -52,18 +63,20 @@
 <body>
     <style>
         .messages {
-            height: 80vh;
+            height: 60vh;
             border: 1px black solid;
         }
         textarea {
-            width: 75%;
-            height: 15vh;
+            width: 100%;
+            height: 11vh;
         }
     </style>
     <div class="messages">&nbsp;<br /></div>
     <div class="input">
+        Message:<br />
         <textarea></textarea>
-        <input type="button" class="sendToAll" value="Send To All" />
+        Receiver (defaults to 'all')<input type="text" class="receiver" value="all" />
+        <input type="button" class="send" value="Send" />
     </div>
 
 </body>
