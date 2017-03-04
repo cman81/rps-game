@@ -35,10 +35,12 @@ class GameRoom implements MessageComponentInterface {
     )));
   }
 
+  // a message will be handled differently depending on who the message is for
   public function onMessage(ConnectionInterface $from, $msg) {
     if ($message = $this->validateMessage($msg)) {
-      $handler = new ChatBot($from, $this->clients);
-//      $handler = new $message['handler']($from, $this->clients);
+      // @see http://stackoverflow.com/questions/19641952/using-a-php-variable-to-instantiate-a-class-problems-with-namespaces
+      $handler = "GameServer\\" . $message->handler;
+      $handler = new $handler($from, $this->clients);
       $handler->handle($message->messageDetails);
     } else {
       // Send this back to the originator
@@ -70,7 +72,7 @@ class GameRoom implements MessageComponentInterface {
    * - a game's referee (making moves, updating the gamestate)
    *
    * @param $msg
-   * @return boolean
+   * @return object|boolean
    */
   public function validateMessage($msg) {
     $msg = \GuzzleHttp\json_decode($msg);
