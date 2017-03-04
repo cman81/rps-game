@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rock, Paper, Scissors - A Classic!</title>
+    <link rel="stylesheet" type="text/css" href="css/reset.css">
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="GameObjects/RPSRefereeReceiver.js"></script>
+    <script src="GameObjects/GameRoomReceiver.js"></script>
+    <script>
+        (function ($) {
+            $(document).ready(function() {
+                var conn = new WebSocket('ws://localhost:8181');
+                conn.onopen = function(e) {
+                    console.log("Connection established!");
+                    conn.send(JSON.stringify({
+                        "handler": "GameHostess",
+                        "messageDetails": {
+                            "operation": "quickStartGame",
+                            "game": "rps"
+                        }
+                    }))
+                };
+
+                /**
+                 * When a message is received, hand it off to its appropriate object for further handling.
+                 * For example: messages that come from 'GameRoom' with an operation 'setTitle' should run 'GameRoomReceiver.setTitle()'
+                 *
+                 * @see http://stackoverflow.com/questions/969743/how-do-i-call-a-dynamically-named-method-in-javascript
+                 *
+                 * @param e
+                 */
+                conn.onmessage = function(e) {
+                    try {
+                        var msg = JSON.parse(e.data);
+                        window[msg.from + 'Receiver'][msg.operation](msg.content);
+                    } catch(err) {
+                        console.log(e.data);
+                        console.log(err.message);
+                    }
+                };
+
+                $('.send').click(function() {
+
+                });
+
+            });
+        })(jQuery);
+    </script>
+</head>
+<body>
+    <style>
+        .messages {
+            height: 60vh;
+            border: 1px black solid;
+        }
+        .action-container > div {
+            float: left;
+            width: 33%;
+        }
+    </style>
+    <div class="messages">&nbsp;<br /></div>
+    <div class="action-container clearfix">
+        <div class="player">
+            Player:<br />
+            <select class="selected-player">
+                <option>1</option>
+                <option>2</option>
+            </select>
+        </div>
+        <div class="weapon">
+            Weapon:<br />
+            <select class="selected-weapon">
+                <option>rock</option>
+                <option>paper</option>
+                <option>scissors</option>
+            </select>
+        </div>
+        <div class="send">
+            <input type="button" value="Go!" />
+        </div>
+    </div>
+
+
+</body>
+</html>
