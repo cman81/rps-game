@@ -5,6 +5,7 @@
     }
   },
   "require": {
-    "cboden/ratchet": "^0.3.6"
+    "cboden/ratchet": "^0.3.6",
+    "nubs/random-name-generator": "v2.1.0"
   }
 }

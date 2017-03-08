@@ -22,5 +22,8 @@ $server = IoServer::factory(
   8181
 );
 
-echo "Starting...\n";
+$generator = \Nubs\RandomNameGenerator\All::create();
+$server_name = str_replace(' ', '-', strtolower($generator->getName()));
+
+echo "Starting the '{$server_name}' server!\n";
 $server->run();

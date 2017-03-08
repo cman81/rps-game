@@ -14,5 +14,9 @@ class GameHostess implements GameServerHandler {
     if ($msg->operation == "quickStartGame") {
       // try to find a game with an empty seat and load it. otherwise, start a new game.
     }
+
+    if ($msg->operation == "loadGame") {
+      // fetch the game from the database and have the proper handler serve it to the clients.
+    }
   }
 }

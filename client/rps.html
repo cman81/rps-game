@@ -16,8 +16,9 @@
                     conn.send(JSON.stringify({
                         "handler": "GameHostess",
                         "messageDetails": {
-                            "operation": "quickStartGame",
-                            "game": "rps"
+                            "operation": "loadGame",
+                            "game": "rps",
+                            "gameId": findGetParameter("gameId")
                         }
                     }))
                 };
@@ -46,6 +47,20 @@
 
             });
         })(jQuery);
+
+        // @see http://stackoverflow.com/questions/5448545/how-to-retrieve-get-parameters-from-javascript
+        function findGetParameter(parameterName) {
+            var result = null;
+            var tmp = [];
+            location.search
+                    .substr(1)
+                    .split("&")
+                    .forEach(function (item) {
+                        tmp = item.split("=");
+                        if (tmp[0] === parameterName) result = decodeURIComponent(tmp[1]);
+                    });
+            return result;
+        }
     </script>
 </head>
 <body>
