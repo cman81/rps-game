@@ -14,10 +14,9 @@
                 conn.onopen = function(e) {
                     console.log("Connection established!");
                     conn.send(JSON.stringify({
-                        "handler": "GameHostess",
+                        "handler": "RPSReferee",
                         "messageDetails": {
-                            "operation": "loadGame",
-                            "game": "RPS",
+                            "operation": "getGameState",
                             "gameId": findGetParameter("gameId"),
                             "player": findGetParameter("player")
                         }
