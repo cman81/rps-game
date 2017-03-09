@@ -10,37 +10,66 @@ namespace GameServer;
 
 
 class RPSReferee extends GameServerHandler {
-  public function handle($msg) {
-    if ($msg->operation == "getGameState") {
-      // fetch the game from the database and have the proper handler serve it to the clients.
-      // @see http://stackoverflow.com/questions/16728265/how-do-i-connect-to-an-sqlite-database-with-php
-      $dir = 'sqlite:C:\Apache24\htdocs\rps-game\server\db\game.db';
-      $dbh  = new \PDO($dir) or die("cannot open the database");
-      $query =  "SELECT game_state FROM games WHERE game_id='{$msg->gameId}'";
+  public $gameState;
 
-      // @see http://stackoverflow.com/questions/12170785/how-to-get-first-row-of-data-in-sqlite3-using-php-pdo
-      if ($result = $dbh->query($query)) {
-        $gameStateJSON = current($result->fetch(\PDO::FETCH_ASSOC));
-        $this->sendGameState(\GuzzleHttp\json_decode($gameStateJSON), $msg->player);
-      } else {
-        $this->sender->send(json_encode(array(
-          'from' => 'RPSReferee',
-          'operation' => 'say',
-          'content' => array(
-            'sender' => "RPSReferee",
-            'mode' => 'private',
-            'message' => "Sorry, but I couldn't find your game.",
-          ),
-        )));
+  public function handle($msg) {
+    $this->getGameState($msg->gameId);
+
+    if ($msg->operation == "fetchGameState") {
+      if ($this->gameState) {
+        $this->sendGameState($msg->player);
       }
+    }
+
+    if ($msg->operation == "makeMove") {
+      $this->sendGameState($msg->player);
+
+      $this->sender->send(json_encode(array(
+        'from' => 'RPSReferee',
+        'operation' => 'say',
+        'content' => array(
+          'sender' => "RPSReferee",
+          'mode' => 'private',
+          'message' => "A move has been made.",
+        ),
+      )));
     }
   }
 
-  public function sendGameState($gameState, $player) {
+  public function getGameState($gameId) {
+    if ($result = $this::queryGameState($gameId)) {
+      $gameStateJSON = current($result->fetch(\PDO::FETCH_ASSOC));
+      $this->gameState = \GuzzleHttp\json_decode($gameStateJSON);
+    } else {
+      $this->sender->send(json_encode(array(
+        'from' => 'RPSReferee',
+        'operation' => 'say',
+        'content' => array(
+          'sender' => "RPSReferee",
+          'mode' => 'private',
+          'message' => "Sorry, but I couldn't find your game.",
+        ),
+      )));
+    }
+
+  }
+
+  public function sendGameState($player) {
+    if ($this->gameState->player1->name == $player) {
+      if (!empty($this->gameState->currentRound->p2)) {
+        $this->gameState->currentRound->p2 = "finished and waiting";
+      }
+    }
+    if ($this->gameState->player2->name == $player) {
+      if (!empty($this->gameState->currentRound->p1)) {
+        $this->gameState->currentRound->p1 = "finished and waiting";
+      }
+    }
+
     $this->sender->send(json_encode(array(
       'from' => 'RPSReferee',
       'operation' => 'gameState',
-      'content' => $gameState,
+      'content' => $this->gameState,
     )));
   }
 }

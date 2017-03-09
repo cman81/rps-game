@@ -16,7 +16,7 @@
                     conn.send(JSON.stringify({
                         "handler": "RPSReferee",
                         "messageDetails": {
-                            "operation": "getGameState",
+                            "operation": "fetchGameState",
                             "gameId": findGetParameter("gameId"),
                             "player": findGetParameter("player")
                         }
@@ -37,12 +37,21 @@
                         window[msg.from + 'Receiver'][msg.operation](msg.content);
                     } catch(err) {
                         console.log(e.data);
+                        console.log(msg);
                         console.log(err.message);
                     }
                 };
 
-                $('.send').click(function() {
-
+                $('.send input').click(function() {
+                    conn.send(JSON.stringify({
+                        "handler": "RPSReferee",
+                        "messageDetails": {
+                            "operation": "makeMove",
+                            "gameId": findGetParameter("gameId"),
+                            "player": findGetParameter("player"),
+                            "move": $('.selected-weapon').val()
+                        }
+                    }))
                 });
 
             });
