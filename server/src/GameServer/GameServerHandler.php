@@ -9,6 +9,17 @@
 namespace GameServer;
 
 
-interface GameServerHandler {
-  public function handle($msgDetails);
+abstract class GameServerHandler {
+  protected $sender;
+  protected $clients;
+
+  /**
+   * GameServerHandler constructor.
+   * @param $sender
+   * @param $clients
+   */
+  public function __construct($sender, $clients) {
+    $this->sender = $sender;
+    $this->clients = $clients;
+  }
 }

@@ -9,18 +9,7 @@
 namespace GameServer;
 
 
-class ChatBot implements GameServerHandler {
-  private $sender;
-  private $clients;
-
-  /**
-   * ChatBot constructor.
-   * @param $sender
-   */
-  public function __construct($sender, $clients) {
-    $this->sender = $sender;
-    $this->clients = $clients;
-  }
+class ChatBot extends GameServerHandler {
 
   public function handle($msgDetails) {
     $is_sent = FALSE;

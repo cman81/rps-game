@@ -6,7 +6,9 @@
  * In this game, the first player to win 4 rounds wins the game.
  */
 var RPSRefereeReceiver = {
-
+  "gameState": function(msg) {
+    console.log(msg);
+  }
 };
 
 // in this game, mark has won round 1. christian has played scissors and is awaiting mark's selection
