@@ -25,8 +25,53 @@ class RPSReferee extends GameServerHandler {
 
     if ($msg->operation == "makeMove") {
       // validate if move is allowed
+      if (in_array($this->getCurrentMove($msg->player), array('rock', 'paper', 'scissors'))) {
+        $this->sender->send(json_encode(array(
+          'from' => 'RPSReferee',
+          'operation' => 'say',
+          'content' => array(
+            'sender' => "RPSReferee",
+            'mode' => 'private',
+            'message' => "Sorry, but you are not allowed to make that move.",
+          ),
+        )));
+
+        return;
+      }
+      if ($this->gameState->player1->name == $msg->player) {
+        $this->gameState->currentRound->p1 = $msg->move;
+      }
+      if ($this->gameState->player2->name == $msg->player) {
+        $this->gameState->currentRound->p2 = $msg->move;
+      }
 
       // resolve combat?
+      if ($this->gameState->currentRound->p1 == $this->gameState->currentRound->p2) {
+        // tie
+        $this->gameState->currentRound->p1 = "deciding...";
+        $this->gameState->currentRound->p2 = "deciding...";
+      }
+      if (
+        ($this->gameState->currentRound->p1 == 'rock' && $this->gameState->currentRound->p2 == 'scissors')
+        || ($this->gameState->currentRound->p1 == 'scissors' && $this->gameState->currentRound->p2 == 'paper')
+        || ($this->gameState->currentRound->p1 == 'paper' && $this->gameState->currentRound->p2 == 'rock')
+      ) {
+        // player 1 wins
+        $this->gameState->player1->score++;
+        $this->gameState->currentRound->p1 = "deciding...";
+        $this->gameState->currentRound->p2 = "deciding...";
+      }
+      if (
+        ($this->gameState->currentRound->p2 == 'rock' && $this->gameState->currentRound->p1 == 'scissors')
+        || ($this->gameState->currentRound->p2 == 'scissors' && $this->gameState->currentRound->p1 == 'paper')
+        || ($this->gameState->currentRound->p2 == 'paper' && $this->gameState->currentRound->p1 == 'rock')
+      ) {
+        // player 2 wins
+        $this->gameState->player2->score++;
+        $this->gameState->currentRound->p1 = "deciding...";
+        $this->gameState->currentRound->p2 = "deciding...";
+
+      }
 
       // update database
 
@@ -80,5 +125,16 @@ class RPSReferee extends GameServerHandler {
         )));
       }
     }
+  }
+
+  public function getCurrentMove($player) {
+    if ($this->gameState->player1->name == $player) {
+      return $this->gameState->currentRound->p1;
+    }
+    if ($this->gameState->player2->name == $player) {
+      return $this->gameState->currentRound->p2;
+    }
+    return FALSE;
+
   }
 }
