@@ -15,16 +15,15 @@ class RPSReferee extends GameServerHandler {
     if ($msg->operation == "newGame") {
       $generator = RandomNameGenerator\All::create();
       $this->gameId = str_replace(' ', '-', strtolower($generator->getName()));
+$this->sender->name = $this->sender->resourceId;
       $this->gameState = (object) array(
         "isGameOver" => FALSE,
         "player1" => array(
-          "id" => $this->sender->resourceId,
-          "name" => "",
+          "name" => $this->sender->name,
           "score" => 0
         ),
         "player2" => array(
-          "id" => FALSE,
-          "name" => "",
+          "name" => FALSE,
           "score" => 0
         ),
         "completedRounds" => array(),
@@ -51,7 +50,9 @@ class RPSReferee extends GameServerHandler {
       $this->gameId = $msg->gameId;
     }
     $this->sender->gameId = $this->gameId;
-    $this->getGameState($this->gameId);
+    if (!$this->getGameState($this->gameId)) {
+      return;
+    }
 
     if ($msg->operation == "fetchGameState") {
       if ($this->gameState) {
@@ -154,6 +155,41 @@ class RPSReferee extends GameServerHandler {
       $this->sendGameState();
     }
 
+    if ($msg->operation == "joinGame") {
+      if ($this->gameState->player1->name == $msg->player) {
+        $this->sender->send(json_encode(array(
+          'from' => 'RPSReferee',
+          'operation' => 'say',
+          'content' => array(
+            'sender' => "RPSReferee",
+            'mode' => 'private',
+            'message' => "Sorry, but you can't play yourself!",
+          ),
+        )));
+
+        return;
+      }
+
+      if ($this->gameState->player2->name !== FALSE) {
+        $this->sender->send(json_encode(array(
+          'from' => 'RPSReferee',
+          'operation' => 'say',
+          'content' => array(
+            'sender' => "RPSReferee",
+            'mode' => 'private',
+            'message' => "Sorry, but there are no empty seats at the table.",
+          ),
+        )));
+
+        return;
+      }
+
+      $this->gameState->player2->name = $this->sender->name;
+      $this->inGameMessage('RPSReferee', "{$this->sender->name} has joined the game!");
+      $this->updateGameState();
+      $this->sendGameState();
+    }
+
   }
 
   public function getGameState($gameId) {
@@ -167,7 +203,11 @@ class RPSReferee extends GameServerHandler {
           'message' => "Sorry, but I couldn't find your game.",
         ),
       )));
+
+      return FALSE;
     }
+
+    return TRUE;
   }
 
   public function sendGameState() {

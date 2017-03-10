@@ -66,6 +66,17 @@
                     }))
                 });
 
+                $('.game-options .join-game').click(function() {
+                    conn.send(JSON.stringify({
+                        "handler": "RPSReferee",
+                        "messageDetails": {
+                            "operation": "joinGame",
+                            "gameId": $('.game-id').val(),
+                            "player": findGetParameter("player")
+                        }
+                    }))
+                });
+
             });
         })(jQuery);
 
