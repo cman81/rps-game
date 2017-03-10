@@ -23,7 +23,7 @@ var gameState;
         // show the status of the current round
         output += "Current round:<br />"
           + gameState.player1.name + ": " + gameState.currentRound.p1 + "<br />"
-          + gameState.player2.name + ": " + gameState.currentRound.p2 + "<br /><br />";
+          + gameState.player2.name + ": " + gameState.currentRound.p2;
         $('.messages').html($('.messages').html() + '<div>' + output + '</div>');
       },
       "say": function(msg) {

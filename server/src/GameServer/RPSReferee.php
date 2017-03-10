@@ -10,10 +10,10 @@ namespace GameServer;
 
 
 class RPSReferee extends GameServerHandler {
-  public $gameState;
 
   public function handle($msg) {
     // no matter what we are doing, start by getting the game state
+    $this->gameId = $msg->gameId;
     $this->getGameState($msg->gameId);
 
     if ($msg->operation == "fetchGameState") {
@@ -41,20 +41,39 @@ class RPSReferee extends GameServerHandler {
 
         return;
       }
-      if ($this->gameState->player1->name == $msg->player) {
-        $this->gameState->currentRound->p1 = $msg->move;
-      }
-      if ($this->gameState->player2->name == $msg->player) {
-        $this->gameState->currentRound->p2 = $msg->move;
+
+      if (
+        $this->gameState->player1->name == $msg->player
+        || $this->gameState->player2->name == $msg->player
+      ) {
+        $this->sender->send(json_encode(array(
+          'from' => 'RPSReferee',
+          'operation' => 'say',
+          'content' => array(
+            'sender' => "RPSReferee",
+            'mode' => 'private',
+            'message' => "You chose {$msg->move}.",
+          ),
+        )));
+
+        if ($this->gameState->player1->name == $msg->player) {
+          $this->gameState->currentRound->p1 = $msg->move;
+        } else {
+          $this->gameState->currentRound->p2 = $msg->move;
+        }
       }
 
       // resolve combat?
+      if ($this->gameState->currentRound->p1 == $this->gameState->currentRound->p2) {
+        $this->inGameMessage("RPSReferee", "{$this->gameState->currentRound->p1} vs {$this->gameState->currentRound->p1}. Tie game!");
+      }
       if (
         ($this->gameState->currentRound->p1 == 'rock' && $this->gameState->currentRound->p2 == 'scissors')
         || ($this->gameState->currentRound->p1 == 'scissors' && $this->gameState->currentRound->p2 == 'paper')
         || ($this->gameState->currentRound->p1 == 'paper' && $this->gameState->currentRound->p2 == 'rock')
       ) {
         // player 1 wins
+        $this->inGameMessage("RPSReferee", "{$this->gameState->currentRound->p1} beats {$this->gameState->currentRound->p2}. {$this->gameState->player1->name} wins!");
         $this->gameState->player1->score++;
       }
       if (
@@ -63,8 +82,8 @@ class RPSReferee extends GameServerHandler {
         || ($this->gameState->currentRound->p2 == 'paper' && $this->gameState->currentRound->p1 == 'rock')
       ) {
         // player 2 wins
+        $this->inGameMessage("RPSReferee", "{$this->gameState->currentRound->p2} beats {$this->gameState->currentRound->p1}. {$this->gameState->player2->name} wins!");
         $this->gameState->player2->score++;
-
       }
 
       // log combat results
@@ -75,16 +94,24 @@ class RPSReferee extends GameServerHandler {
         );
         $this->gameState->currentRound->p1 = "deciding...";
         $this->gameState->currentRound->p2 = "deciding...";
+
+        // is it game over?
         if (
           $this->gameState->player1->score == 4
           || $this->gameState->player2->score == 4
         ) {
+          if ($this->gameState->player1->score == 4) {
+            $this->inGameMessage("RPSReferee", "{$this->gameState->player1->name} wins the match! gg");
+          } else {
+            $this->inGameMessage("RPSReferee", "{$this->gameState->player2->name} wins the match! gg");
+          }
+
           $this->gameState->isGameOver = TRUE;
         }
       }
 
       // update database
-      $this->updateGameState($msg->gameId, $this->gameState);
+      $this->updateGameState();
 
       // send updated game state
       $this->sendGameState($msg->player);
@@ -92,7 +119,7 @@ class RPSReferee extends GameServerHandler {
   }
 
   public function getGameState($gameId) {
-    if ($result = $this::queryGameState($gameId)) {
+    if ($result = $this->queryGameState()) {
       $gameStateJSON = current($result->fetch(\PDO::FETCH_ASSOC));
       $this->gameState = \GuzzleHttp\json_decode($gameStateJSON);
       $this->sender->gameId = $gameId;

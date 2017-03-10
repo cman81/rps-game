@@ -45,14 +45,16 @@
                     }
                 };
 
-                $('.send input').click(function() {
+                $('.weapon button').click(function() {
+                    console.log($(this).val());
+
                     conn.send(JSON.stringify({
                         "handler": "RPSReferee",
                         "messageDetails": {
                             "operation": "makeMove",
                             "gameId": findGetParameter("gameId"),
                             "player": findGetParameter("player"),
-                            "move": $('.selected-weapon').val()
+                            "move": $(this).val()
                         }
                     }))
                 });
@@ -82,30 +84,19 @@
             border: 1px black solid;
             overflow-y: scroll;
         }
-        .action-container > div {
-            float: left;
-            width: 33%;
+        .messages div {
+            border: 1px solid #eee;
+            margin: 1em 2em;
+            padding: 1em;
         }
     </style>
     <div class="messages">&nbsp;<br /></div>
     <div class="action-container clearfix">
-        <div class="player">
-            Player:<br />
-            <select class="selected-player">
-                <option>1</option>
-                <option>2</option>
-            </select>
-        </div>
         <div class="weapon">
             Weapon:<br />
-            <select class="selected-weapon">
-                <option>rock</option>
-                <option>paper</option>
-                <option>scissors</option>
-            </select>
-        </div>
-        <div class="send">
-            <input type="button" value="Go!" />
+            <button value="rock">I choose Rock!</button>
+            <button value="paper">I choose Paper!</button>
+            <button value="scissors">I choose Scissors!</button>
         </div>
     </div>
 
