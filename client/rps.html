@@ -35,6 +35,9 @@
                     try {
                         var msg = JSON.parse(e.data);
                         window[msg.from + 'Receiver'][msg.operation](msg.content);
+
+                        // @see http://stackoverflow.com/questions/10503606/scroll-to-bottom-of-div-on-page-load-jquery
+                        $(".messages").scrollTop($('.messages')[0].scrollHeight);
                     } catch(err) {
                         console.log(e.data);
                         console.log(msg);

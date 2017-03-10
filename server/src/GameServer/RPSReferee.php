@@ -26,9 +26,8 @@ class RPSReferee extends GameServerHandler {
     if ($msg->operation == "makeMove") {
       // validate if move is allowed
       if (
-        in_array($this->getCurrentMove($msg->player), array('rock', 'paper', 'scissors'))
-        || $this->gameState->player1->score == 4
-        || $this->gameState->player2->score == 4
+        $this->gameState->isGameOver
+        || in_array($this->getCurrentMove($msg->player), array('rock', 'paper', 'scissors'))
       ) {
         $this->sender->send(json_encode(array(
           'from' => 'RPSReferee',
@@ -76,6 +75,12 @@ class RPSReferee extends GameServerHandler {
         );
         $this->gameState->currentRound->p1 = "deciding...";
         $this->gameState->currentRound->p2 = "deciding...";
+        if (
+          $this->gameState->player1->score == 4
+          || $this->gameState->player2->score == 4
+        ) {
+          $this->gameState->isGameOver = TRUE;
+        }
       }
 
       // update database

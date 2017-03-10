@@ -40,22 +40,15 @@ var gameState;
 
 // in this game, mark has won round 1. christian has played scissors and is awaiting mark's selection
 var sampleGameState = {
-  "player1": {
-    "name": "mark",
-    "score": 1
-  },
-  "player2": {
-    "name": "christian",
-    "score": 0
-  },
-  "completedRounds": [
-    {
-      "p1": "rock",
-      "p2": "scissors"
-    }
-  ],
-  "currentRound": {
-    "p1": "",
-    "p2": "scissors"
-  }
+  "isGameOver": true,
+  "player1": {"name": "mark", "score": 4},
+  "player2": {"name": "christian", "score": 2},
+  "completedRounds": [{"p1": "rock", "p2": "scissors"}, {"p1": "rock", "p2": "rock"}, {
+    "p1": "paper",
+    "p2": "rock"
+  }, {"p1": "paper", "p2": "scissors"}, {"p1": "paper", "p2": "scissors"}, {
+    "p1": "paper",
+    "p2": "rock"
+  }, {"p1": "paper", "p2": "rock"}],
+  "currentRound": {"p1": "deciding...", "p2": "deciding..."}
 };
