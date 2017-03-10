@@ -7,19 +7,56 @@
  */
 
 namespace GameServer;
-
+use Nubs\RandomNameGenerator;
 
 class RPSReferee extends GameServerHandler {
 
   public function handle($msg) {
+    if ($msg->operation == "newGame") {
+      $generator = RandomNameGenerator\All::create();
+      $this->gameId = str_replace(' ', '-', strtolower($generator->getName()));
+      $this->gameState = (object) array(
+        "isGameOver" => FALSE,
+        "player1" => array(
+          "id" => $this->sender->resourceId,
+          "name" => "",
+          "score" => 0
+        ),
+        "player2" => array(
+          "id" => FALSE,
+          "name" => "",
+          "score" => 0
+        ),
+        "completedRounds" => array(),
+        "currentRound" => array(
+          "p1" => "deciding...",
+          "p2" => "deciding...",
+        ),
+      );
+      // update database
+      $this->updateGameState(TRUE);
+      $this->sender->send(json_encode(array(
+        'from' => 'RPSReferee',
+        'operation' => 'say',
+        'content' => array(
+          'sender' => "RPSReferee",
+          'mode' => 'private',
+          'message' => "You a new game called '{$this->gameId}'",
+        ),
+      )));
+    }
+
     // no matter what we are doing, start by getting the game state
-    $this->gameId = $msg->gameId;
-    $this->getGameState($msg->gameId);
+    if (!$this->gameId) {
+      $this->gameId = $msg->gameId;
+    }
+    $this->sender->gameId = $this->gameId;
+    $this->getGameState($this->gameId);
 
     if ($msg->operation == "fetchGameState") {
       if ($this->gameState) {
         $this->sender->player = $msg->player;
-        $this->sendGameState($msg->player);
+        $this->sendGameState();
       }
     }
 
@@ -114,16 +151,13 @@ class RPSReferee extends GameServerHandler {
       $this->updateGameState();
 
       // send updated game state
-      $this->sendGameState($msg->player);
+      $this->sendGameState();
     }
+
   }
 
   public function getGameState($gameId) {
-    if ($result = $this->queryGameState()) {
-      $gameStateJSON = current($result->fetch(\PDO::FETCH_ASSOC));
-      $this->gameState = \GuzzleHttp\json_decode($gameStateJSON);
-      $this->sender->gameId = $gameId;
-    } else {
+    if (!$this->queryGameState()) {
       $this->sender->send(json_encode(array(
         'from' => 'RPSReferee',
         'operation' => 'say',
@@ -134,13 +168,12 @@ class RPSReferee extends GameServerHandler {
         ),
       )));
     }
-
   }
 
-  public function sendGameState($player) {
+  public function sendGameState() {
     foreach ($this->clients as $client) {
       // only update clients who are in the game
-      if ($client->gameId == $this->sender->gameId) {
+      if ($client->gameId == $this->gameId) {
         // hide opponent's selection
         $playerGameState = unserialize(serialize($this->gameState)); // dirty stdClass clone - @see http://stackoverflow.com/questions/15945837/trying-to-clone-a-stdclass
         if ($this->gameState->player1->name == $client->player) {

@@ -34,15 +34,25 @@ abstract class GameServerHandler {
     $query =  "SELECT game_state FROM games WHERE game_id='{$this->gameId}'";
 
     // @see http://stackoverflow.com/questions/12170785/how-to-get-first-row-of-data-in-sqlite3-using-php-pdo
-    return $dbh->query($query);
+    $result = $dbh->query($query);
+    $gameStateJSON = $result->fetch(\PDO::FETCH_ASSOC);
+    if (!$gameStateJSON) {
+      return FALSE;
+    }
+    $this->gameState = \GuzzleHttp\json_decode(current($gameStateJSON));
+    return TRUE;
   }
 
-  public function updateGameState() {
+  public function updateGameState($is_new = FALSE) {
     // fetch the game from the database and have the proper handler serve it to the clients.
     // @see http://stackoverflow.com/questions/16728265/how-do-i-connect-to-an-sqlite-database-with-php
     $dir = 'sqlite:C:\Apache24\htdocs\rps-game\server\db\game.db';
     $dbh = new \PDO($dir) or die("cannot open the database");
-    $query = $dbh->prepare('UPDATE games SET game_state = ? WHERE game_id = ?');
+    if ($is_new) {
+      $query = $dbh->prepare('INSERT INTO games (game_state, game_id) VALUES (?, ?)');
+    } else {
+      $query = $dbh->prepare('UPDATE games SET game_state = ? WHERE game_id = ?');
+    }
 
     // @see http://stackoverflow.com/questions/12170785/how-to-get-first-row-of-data-in-sqlite3-using-php-pdo
     $query->execute(array(

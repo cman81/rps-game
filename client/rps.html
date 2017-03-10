@@ -46,8 +46,6 @@
                 };
 
                 $('.weapon button').click(function() {
-                    console.log($(this).val());
-
                     conn.send(JSON.stringify({
                         "handler": "RPSReferee",
                         "messageDetails": {
@@ -55,6 +53,15 @@
                             "gameId": findGetParameter("gameId"),
                             "player": findGetParameter("player"),
                             "move": $(this).val()
+                        }
+                    }))
+                });
+
+                $('.game-options .new-game').click(function() {
+                    conn.send(JSON.stringify({
+                        "handler": "RPSReferee",
+                        "messageDetails": {
+                            "operation": "newGame"
                         }
                     }))
                 });
@@ -89,15 +96,24 @@
             margin: 1em 2em;
             padding: 1em;
         }
-        button { padding: 4em; }
+        .weapon button { padding: 4em; }
+        .action-container { margin: 15px; }
+        .game-id { width: 250px; }
     </style>
     <div class="messages">&nbsp;<br /></div>
-    <div class="action-container clearfix">
+    <div class="action-container">
         <div class="weapon">
             Weapon:<br />
             <button value="rock">I choose Rock!</button>
             <button value="paper">I choose Paper!</button>
             <button value="scissors">I choose Scissors!</button>
+        </div>
+    </div>
+    <div class="action-container">
+        <div class="game-options">
+            <button class="new-game">New Game</button>
+            <button class="join-game">Join Game</button>
+            <input type="text" class="game-id" />
         </div>
     </div>
 
