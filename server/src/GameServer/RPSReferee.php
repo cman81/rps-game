@@ -25,7 +25,11 @@ class RPSReferee extends GameServerHandler {
 
     if ($msg->operation == "makeMove") {
       // validate if move is allowed
-      if (in_array($this->getCurrentMove($msg->player), array('rock', 'paper', 'scissors'))) {
+      if (
+        in_array($this->getCurrentMove($msg->player), array('rock', 'paper', 'scissors'))
+        || $this->gameState->player1->score == 4
+        || $this->gameState->player2->score == 4
+      ) {
         $this->sender->send(json_encode(array(
           'from' => 'RPSReferee',
           'operation' => 'say',
@@ -46,11 +50,6 @@ class RPSReferee extends GameServerHandler {
       }
 
       // resolve combat?
-      if ($this->gameState->currentRound->p1 == $this->gameState->currentRound->p2) {
-        // tie
-        $this->gameState->currentRound->p1 = "deciding...";
-        $this->gameState->currentRound->p2 = "deciding...";
-      }
       if (
         ($this->gameState->currentRound->p1 == 'rock' && $this->gameState->currentRound->p2 == 'scissors')
         || ($this->gameState->currentRound->p1 == 'scissors' && $this->gameState->currentRound->p2 == 'paper')
@@ -58,8 +57,6 @@ class RPSReferee extends GameServerHandler {
       ) {
         // player 1 wins
         $this->gameState->player1->score++;
-        $this->gameState->currentRound->p1 = "deciding...";
-        $this->gameState->currentRound->p2 = "deciding...";
       }
       if (
         ($this->gameState->currentRound->p2 == 'rock' && $this->gameState->currentRound->p1 == 'scissors')
@@ -68,12 +65,21 @@ class RPSReferee extends GameServerHandler {
       ) {
         // player 2 wins
         $this->gameState->player2->score++;
-        $this->gameState->currentRound->p1 = "deciding...";
-        $this->gameState->currentRound->p2 = "deciding...";
 
       }
 
+      // log combat results
+      if ($this->gameState->currentRound->p1 != "deciding..." && $this->gameState->currentRound->p2 != "deciding...") {
+        $this->gameState->completedRounds[] = (object) array(
+          'p1' => $this->gameState->currentRound->p1,
+          'p2' => $this->gameState->currentRound->p2,
+        );
+        $this->gameState->currentRound->p1 = "deciding...";
+        $this->gameState->currentRound->p2 = "deciding...";
+      }
+
       // update database
+      $this->updateGameState($msg->gameId, $this->gameState);
 
       // send updated game state
       $this->sendGameState($msg->player);

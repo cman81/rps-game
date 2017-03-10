@@ -24,14 +24,14 @@ var gameState;
         output += "Current round:<br />"
           + gameState.player1.name + ": " + gameState.currentRound.p1 + "<br />"
           + gameState.player2.name + ": " + gameState.currentRound.p2 + "<br /><br />";
-        $('.messages').html(output);
+        $('.messages').html($('.messages').html() + '<div>' + output + '</div>');
       },
       "say": function(msg) {
         var $messages = $('.messages');
         if (msg.mode == 'public') {
-          $messages.html($messages.html() + msg.sender + ' says: ' + msg.message + '<br />');
+          $messages.html($messages.html() + '<div>' + msg.sender + ' says: ' + msg.message + '</div>');
         } else {
-          $messages.html($messages.html() + msg.sender + ' whispers: ' + msg.message + '<br />');
+          $messages.html($messages.html() + '<div>' + msg.sender + ' whispers: ' + msg.message + '</div>');
         }
       }
     };
