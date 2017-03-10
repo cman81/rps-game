@@ -5,8 +5,13 @@ There is a server component and a client component to this.
 ## Setup
 You will need composer to get some dependent packages. According to https://getcomposer.org/doc/01-basic-usage.md you head to the **/server** directory and run the following command:
 ```
+composer install
+```
+or
+```
 php composer.phar install
 ```
+...depending on how you execute composer commands.
 
 ## Chat (aka Hello World)
 To run the server on your local, head to **/server/bin** directory and use the following command:
