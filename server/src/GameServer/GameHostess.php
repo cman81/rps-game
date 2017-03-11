@@ -15,22 +15,27 @@ class GameHostess extends GameServerHandler {
       // try to find a game with an empty seat and load it. otherwise, start a new game.
     }
 
-    if ($msg->operation == "loadGame") {
-      // fetch the game from the database and have the proper handler serve it to the clients.
-      // @see http://stackoverflow.com/questions/16728265/how-do-i-connect-to-an-sqlite-database-with-php
+    if ($msg->operation == "login") {
       $dir = 'sqlite:C:\Apache24\htdocs\rps-game\server\db\game.db';
-      $dbh  = new \PDO($dir) or die("cannot open the database");
-      $query =  "SELECT game_state FROM games WHERE game_id='{$msg->gameId}'";
+      $dbh = new \PDO($dir) or die("cannot open the database");
+      $query = $dbh->prepare('SELECT username FROM users WHERE username = ? AND password = ?');
 
-      // @see http://stackoverflow.com/questions/12170785/how-to-get-first-row-of-data-in-sqlite3-using-php-pdo
-      if ($result = $dbh->query($query)) {
-        $gameStateJSON = current($result->fetch(\PDO::FETCH_ASSOC));
-        $handler = "GameServer\\" . $msg->game . "Referee";
-        $handler = new $handler($this->sender, $this->clients);
-
-        // each game may have its own way of hiding certain information from players
-        // or tweaking the gamestate otherwise
-        $handler->sendGameState(\GuzzleHttp\json_decode($gameStateJSON), $msg->player);
+      $query->execute(array(
+        $msg->username,
+        $msg->password,
+      ));
+      $rows = count($query->fetchAll());
+      if ($rows == 1) {
+        $this->sender->name = $msg->username;
+        $this->sender->send(json_encode(array(
+          'from' => 'GameHostess',
+          'operation' => 'say',
+          'content' => array(
+            'sender' => "GameHostess",
+            'mode' => 'private',
+            'message' => "Welcome! You are logged in as '{$msg->username}'",
+          ),
+        )));
       } else {
         $this->sender->send(json_encode(array(
           'from' => 'GameHostess',
@@ -38,7 +43,7 @@ class GameHostess extends GameServerHandler {
           'content' => array(
             'sender' => "GameHostess",
             'mode' => 'private',
-            'message' => "Sorry, but I couldn't find your game.",
+            'message' => "Login failed.",
           ),
         )));
       }

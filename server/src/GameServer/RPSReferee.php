@@ -12,10 +12,23 @@ use Nubs\RandomNameGenerator;
 class RPSReferee extends GameServerHandler {
 
   public function handle($msg) {
+    if (!$this->sender->name) {
+      $this->sender->send(json_encode(array(
+        'from' => 'RPSReferee',
+        'operation' => 'say',
+        'content' => array(
+          'sender' => "RPSReferee",
+          'mode' => 'private',
+          'message' => "You need to login first.",
+        ),
+      )));
+
+      return;
+    }
+
     if ($msg->operation == "newGame") {
       $generator = RandomNameGenerator\All::create();
-      $this->gameId = str_replace(' ', '-', strtolower($generator->getName()));
-$this->sender->name = $this->sender->resourceId;
+      $this->sender->gameId = str_replace(' ', '-', strtolower($generator->getName()));
       $this->gameState = (object) array(
         "isGameOver" => FALSE,
         "player1" => array(
@@ -40,32 +53,29 @@ $this->sender->name = $this->sender->resourceId;
         'content' => array(
           'sender' => "RPSReferee",
           'mode' => 'private',
-          'message' => "You a new game called '{$this->gameId}'",
+          'message' => "You a new game called '{$this->sender->gameId}'",
         ),
       )));
     }
 
-    // no matter what we are doing, start by getting the game state
-    if (!$this->gameId) {
-      $this->gameId = $msg->gameId;
+    if ($msg->operation == "continueGame") {
+      $this->sender->gameId = $msg->gameId;
+      if (!$this->getGameState()) {
+        return;
+      }
+      $this->sendGameState();
     }
-    $this->sender->gameId = $this->gameId;
-    if (!$this->getGameState($this->gameId)) {
+
+    if (!$this->getGameState()) {
       return;
     }
 
-    if ($msg->operation == "fetchGameState") {
-      if ($this->gameState) {
-        $this->sender->player = $msg->player;
-        $this->sendGameState();
-      }
-    }
 
     if ($msg->operation == "makeMove") {
       // validate if move is allowed
       if (
         $this->gameState->isGameOver
-        || in_array($this->getCurrentMove($msg->player), array('rock', 'paper', 'scissors'))
+        || in_array($this->getCurrentMove($this->sender->name), array('rock', 'paper', 'scissors'))
       ) {
         $this->sender->send(json_encode(array(
           'from' => 'RPSReferee',
@@ -81,8 +91,8 @@ $this->sender->name = $this->sender->resourceId;
       }
 
       if (
-        $this->gameState->player1->name == $msg->player
-        || $this->gameState->player2->name == $msg->player
+        $this->gameState->player1->name == $this->sender->name
+        || $this->gameState->player2->name == $this->sender->name
       ) {
         $this->sender->send(json_encode(array(
           'from' => 'RPSReferee',
@@ -94,7 +104,7 @@ $this->sender->name = $this->sender->resourceId;
           ),
         )));
 
-        if ($this->gameState->player1->name == $msg->player) {
+        if ($this->gameState->player1->name == $this->sender->name) {
           $this->gameState->currentRound->p1 = $msg->move;
         } else {
           $this->gameState->currentRound->p2 = $msg->move;
@@ -156,7 +166,7 @@ $this->sender->name = $this->sender->resourceId;
     }
 
     if ($msg->operation == "joinGame") {
-      if ($this->gameState->player1->name == $msg->player) {
+      if ($this->gameState->player1->name == $this->sender->name) {
         $this->sender->send(json_encode(array(
           'from' => 'RPSReferee',
           'operation' => 'say',
@@ -192,7 +202,7 @@ $this->sender->name = $this->sender->resourceId;
 
   }
 
-  public function getGameState($gameId) {
+  public function getGameState() {
     if (!$this->queryGameState()) {
       $this->sender->send(json_encode(array(
         'from' => 'RPSReferee',
@@ -213,16 +223,16 @@ $this->sender->name = $this->sender->resourceId;
   public function sendGameState() {
     foreach ($this->clients as $client) {
       // only update clients who are in the game
-      if ($client->gameId == $this->gameId) {
+      if ($client->gameId == $this->sender->gameId) {
         // hide opponent's selection
         $playerGameState = unserialize(serialize($this->gameState)); // dirty stdClass clone - @see http://stackoverflow.com/questions/15945837/trying-to-clone-a-stdclass
-        if ($this->gameState->player1->name == $client->player) {
+        if ($this->gameState->player1->name == $client->name) {
           // this is player 1, so hide player 2's selection
           if ($this->gameState->currentRound->p2 != "deciding...") {
             $playerGameState->currentRound->p2 = "finished and waiting";
           }
         }
-        if ($this->gameState->player2->name == $client->player) {
+        if ($this->gameState->player2->name == $client->name) {
           // this is player 2, so hide player 1's selection
           if ($this->gameState->currentRound->p1 != "deciding...") {
             $playerGameState->currentRound->p1 = "finished and waiting";

@@ -31,7 +31,7 @@ abstract class GameServerHandler {
     // @see http://stackoverflow.com/questions/16728265/how-do-i-connect-to-an-sqlite-database-with-php
     $dir = 'sqlite:C:\Apache24\htdocs\rps-game\server\db\game.db';
     $dbh  = new \PDO($dir) or die("cannot open the database");
-    $query =  "SELECT game_state FROM games WHERE game_id='{$this->gameId}'";
+    $query =  "SELECT game_state FROM games WHERE game_id='{$this->sender->gameId}'";
 
     // @see http://stackoverflow.com/questions/12170785/how-to-get-first-row-of-data-in-sqlite3-using-php-pdo
     $result = $dbh->query($query);
@@ -57,14 +57,14 @@ abstract class GameServerHandler {
     // @see http://stackoverflow.com/questions/12170785/how-to-get-first-row-of-data-in-sqlite3-using-php-pdo
     $query->execute(array(
       json_encode($this->gameState),
-      $this->gameId,
+      $this->sender->gameId,
     ));
   }
 
   public function inGameMessage($sender, $msg) {
     foreach ($this->clients as $client) {
       // only update clients who are in the game
-      if ($client->gameId == $this->gameId) {
+      if ($client->gameId == $this->sender->gameId) {
         $client->send(json_encode(array(
           'from' => $sender,
           'operation' => 'say',

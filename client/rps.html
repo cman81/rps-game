@@ -6,21 +6,13 @@
     <link rel="stylesheet" type="text/css" href="css/reset.css">
     <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
     <script src="GameObjects/RPSRefereeReceiver.js"></script>
-    <script src="GameObjects/GameRoomReceiver.js"></script>
+    <script src="GameObjects/GameHostessReceiver.js"></script>
     <script>
         (function ($) {
             $(document).ready(function() {
                 var conn = new WebSocket('ws://localhost:8181');
                 conn.onopen = function(e) {
                     console.log("Connection established!");
-                    conn.send(JSON.stringify({
-                        "handler": "RPSReferee",
-                        "messageDetails": {
-                            "operation": "fetchGameState",
-                            "gameId": findGetParameter("gameId"),
-                            "player": findGetParameter("player")
-                        }
-                    }))
                 };
 
                 /**
@@ -51,7 +43,6 @@
                         "messageDetails": {
                             "operation": "makeMove",
                             "gameId": findGetParameter("gameId"),
-                            "player": findGetParameter("player"),
                             "move": $(this).val()
                         }
                     }))
@@ -71,8 +62,28 @@
                         "handler": "RPSReferee",
                         "messageDetails": {
                             "operation": "joinGame",
-                            "gameId": $('.game-id').val(),
-                            "player": findGetParameter("player")
+                            "gameId": $('.game-id').val()
+                        }
+                    }))
+                });
+
+                $('.game-options .continue-game').click(function() {
+                    conn.send(JSON.stringify({
+                        "handler": "RPSReferee",
+                        "messageDetails": {
+                            "operation": "continueGame",
+                            "gameId": $('.game-id').val()
+                        }
+                    }))
+                });
+
+                $('.login button').click(function() {
+                    conn.send(JSON.stringify({
+                        "handler": "GameHostess",
+                        "messageDetails": {
+                            "operation": "login",
+                            "username": $('.username').val(),
+                            "password": $('.password').val() // bad security, i know
                         }
                     }))
                 });
@@ -121,10 +132,18 @@
         </div>
     </div>
     <div class="action-container">
+        <div class="login">
+            <input type="text" class="username" />
+            <input type="password" class="password" />
+            <button class="login">Login</button>
+        </div>
+    </div>
+    <div class="action-container">
         <div class="game-options">
-            <button class="new-game">New Game</button>
+            <button class="new-game">Create Game</button>
             <button class="join-game">Join Game</button>
             <input type="text" class="game-id" />
+            <button class="continue-game">Continue Game</button>
         </div>
     </div>
 
