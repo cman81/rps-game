@@ -12,7 +12,6 @@ namespace GameServer;
 abstract class GameServerHandler {
   protected $sender;
   protected $clients;
-  public $gameId;
   public $gameState;
 
 
@@ -76,5 +75,16 @@ abstract class GameServerHandler {
         )));
       }
     }
+  }
+
+  public function logVictory($username) {
+    $dir = 'sqlite:C:\Apache24\htdocs\rps-game\server\db\game.db';
+    $dbh = new \PDO($dir) or die("cannot open the database");
+    $query = $dbh->prepare('INSERT INTO victories (username, game_id) VALUES (?, ?)');
+
+    $query->execute(array(
+      $username,
+      $this->sender->gameId,
+    ));
   }
 }

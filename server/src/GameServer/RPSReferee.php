@@ -66,12 +66,11 @@ class RPSReferee extends GameServerHandler {
       $this->sendGameState();
     }
 
-    if (!$this->getGameState()) {
-      return;
-    }
-
-
     if ($msg->operation == "makeMove") {
+      if (!$this->getGameState()) {
+        return;
+      }
+
       // validate if move is allowed
       if (
         $this->gameState->isGameOver
@@ -150,8 +149,10 @@ class RPSReferee extends GameServerHandler {
         ) {
           if ($this->gameState->player1->score == 4) {
             $this->inGameMessage("RPSReferee", "{$this->gameState->player1->name} wins the match! gg");
+            $this->logVictory($this->gameState->player1->name);
           } else {
             $this->inGameMessage("RPSReferee", "{$this->gameState->player2->name} wins the match! gg");
+            $this->logVictory($this->gameState->player2->name);
           }
 
           $this->gameState->isGameOver = TRUE;
@@ -166,6 +167,11 @@ class RPSReferee extends GameServerHandler {
     }
 
     if ($msg->operation == "joinGame") {
+      $this->sender->gameId = $msg->gameId;
+      if (!$this->getGameState()) {
+        return;
+      }
+
       if ($this->gameState->player1->name == $this->sender->name) {
         $this->sender->send(json_encode(array(
           'from' => 'RPSReferee',
