@@ -9,7 +9,7 @@
     <script>
         (function ($) {
             $(document).ready(function() {
-                var conn = new WebSocket('ws://localhost:8181');
+                var conn = new WebSocket('ws://' + window.location.hostname + ':8181');
                 conn.onopen = function(e) {
                     console.log("Connection established!");
                 };

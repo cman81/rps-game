@@ -10,7 +10,7 @@
     <script>
         (function ($) {
             $(document).ready(function() {
-                var conn = new WebSocket('ws://localhost:8181');
+                var conn = new WebSocket('ws://' + window.location.hostname + ':8181');
                 conn.onopen = function(e) {
                     console.log("Connection established!");
                 };
@@ -45,7 +45,7 @@
                             "gameId": findGetParameter("gameId"),
                             "move": $(this).val()
                         }
-                    }))
+                    }));
                 });
 
                 $('.game-options .new-game').click(function() {
@@ -54,7 +54,7 @@
                         "messageDetails": {
                             "operation": "newGame"
                         }
-                    }))
+                    }));
                 });
 
                 $('.game-options .join-game').click(function() {
@@ -64,7 +64,7 @@
                             "operation": "joinGame",
                             "gameId": $('.game-id').val()
                         }
-                    }))
+                    }));
                 });
 
                 $('.game-options .continue-game').click(function() {
@@ -74,7 +74,7 @@
                             "operation": "continueGame",
                             "gameId": $('.game-id').val()
                         }
-                    }))
+                    }));
                 });
 
                 $('.login button').click(function() {
@@ -85,7 +85,7 @@
                             "username": $('.username').val(),
                             "password": $('.password').val() // bad security, i know
                         }
-                    }))
+                    }));
                 });
 
             });
