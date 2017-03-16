@@ -36,6 +36,15 @@ class GameHostess extends GameServerHandler {
             'message' => "Welcome! You are logged in as '{$msg->username}'",
           ),
         )));
+
+        $this->sender->send(json_encode(array(
+          'from' => 'GameHostess',
+          'operation' => 'getGames',
+          'content' => array(
+            'myGames' => $this->getMyGames(),
+            'openGames' => $this->getOpenGames(),
+          ),
+        )));
       } else {
         $this->sender->send(json_encode(array(
           'from' => 'GameHostess',
@@ -48,5 +57,57 @@ class GameHostess extends GameServerHandler {
         )));
       }
     }
+  }
+
+  public function getMyGames() {
+    $dir = 'sqlite:C:\Apache24\htdocs\rps-game\server\db\game.db';
+    $dbh = new \PDO($dir) or die("cannot open the database");
+    $query = $dbh->prepare('SELECT * FROM games');
+
+    $query->execute(array());
+    /**
+     * "To return an associative array grouped by the values of a specified
+     * column, bitwise-OR PDO::FETCH_COLUMN with PDO::FETCH_GROUP"
+     *
+     * @see http://php.net/manual/en/pdostatement.fetchall.php
+     */
+    $results = $query->fetchAll();
+    $games = array();
+    foreach ($results as $value) {
+      $gameObj = \GuzzleHttp\json_decode($value['game_state']);
+      if (!$gameObj->isGameOver) {
+        if (
+          $gameObj->player1->name == $this->sender->name
+          || $gameObj->player2->name == $this->sender->name
+        ) {
+          $games[$value['game_id']] = $gameObj;
+          continue;
+        }
+      }
+    }
+    return $games;
+  }
+
+  public function getOpenGames() {
+    $dir = 'sqlite:C:\Apache24\htdocs\rps-game\server\db\game.db';
+    $dbh = new \PDO($dir) or die("cannot open the database");
+    $query = $dbh->prepare('SELECT * FROM games');
+
+    $query->execute(array());
+    $results = $query->fetchAll();
+    $games = array();
+    foreach ($results as $value) {
+      $gameObj = \GuzzleHttp\json_decode($value['game_state']);
+      if (!$gameObj->isGameOver) {
+        if (
+          $gameObj->player1->name == FALSE
+          || $gameObj->player2->name == FALSE
+        ) {
+          $games[$value['game_id']] = $gameObj;
+          continue;
+        }
+      }
+    }
+    return $games;
   }
 }

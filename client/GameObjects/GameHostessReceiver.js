@@ -18,6 +18,9 @@ var GameHostessReceiver;
         } else {
           $messages.html($messages.html() + '<div>' + msg.sender + ' whispers: ' + msg.message + '</div>');
         }
+      },
+      "getGames": function(msg) {
+var a = 'a';
       }
     };
   });
