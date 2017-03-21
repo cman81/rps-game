@@ -7,12 +7,13 @@ var GameHostessReceiver;
 
 (function ($) {
   $(document).ready(function () {
+    var $messages = $('.messages');
+    
     /**
      * In this game, the first player to win 4 rounds wins the game.
      */
     GameHostessReceiver = {
       "say": function(msg) {
-        var $messages = $('.messages');
         if (msg.mode == 'public') {
           $messages.html($messages.html() + '<div>' + msg.sender + ' says: ' + msg.message + '</div>');
         } else {
@@ -20,7 +21,22 @@ var GameHostessReceiver;
         }
       },
       "getGames": function(msg) {
-var a = 'a';
+        var gameIds = [];
+        for (var key in msg.myGames) {
+          gameIds.push(key);
+        }
+        if (gameIds.length > 0) {
+          $messages.html($messages.html() + '<div>Your Games:<br />' + gameIds.join('<br />') + '</div>');  
+        }
+        
+
+        gameIds = [];
+        for (key in msg.openGames) {
+          gameIds.push(key);
+        }
+        if (gameIds.length > 0) {
+          $messages.html($messages.html() + '<div>Open Games:<br />' + gameIds.join('<br />') + '</div>');
+        }
       }
     };
   });
